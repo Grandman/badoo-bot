@@ -9,7 +9,10 @@ const selectors = [
   { key: "name", selector: ".profile-header__name .ellipsis" },
   { key: "location", selector: ".js-location-label" },
   { key: "score", selector: ".scale-value" },
-  { key: "interests", selector: ".js-interests-board" }
+  { key: "interests", selector: ".js-interests-board" },
+  { key: "riseup", selector: ".js-explanation-open" },
+  { key: "premium", selector: ".icon--premium" },
+  { key: "last_online", selector: "#app_c > div > div.profile__header.js-profile-header-container.js-core-events-container > header > div.profile-header__txt > div.profile-header__info > div.profile-header__online-status > i > span > span" }
 ];
 
 const getContents = (selectors) => {
@@ -20,22 +23,28 @@ const getContents = (selectors) => {
   });
   return userInfo;
 }
+var liked = 0;
+var total = 0;
 
 const like = function*() {
-  yield nightmare.wait(500);
-  yield nightmare.click(".js-profile-header-toggle-layout");
-  yield nightmare.wait(".js-profile-location-container");
+  yield nightmare.wait(600);
+  yield nightmare.click(".js-profile-header-name");
+  yield nightmare.wait(".location-map-wrap");
   yield nightmare
     .evaluate(getContents, selectors)
     .then((userInfo) => {
+      total += 1;
       if (
         userInfo &&
-        (userInfo.location == location && score < userInfo.score)
+        (userInfo.location == location && userInfo.last_online != "Онлайн7+днейназад")
       ) {
-        console.log(`\t yes -> click -- Info: ${userInfo.location}, Name: ${userInfo.name}, "Score: ${userInfo.score}, Interests": ${userInfo.interests}`);
+        liked += 1;
+        console.log(`\t yes -> click -- Info: ${userInfo.location}, Name: ${userInfo.name}, "Score: ${userInfo.score}, Interests": ${userInfo.interests}, Last Online: ${userInfo.last_online}`);
+        console.log(`LIKED: ${liked}; TOTAL: ${total}`);
         return nightmare.type("body", "1");
       } else {
-        console.log(`\t no -> click -- Info: ${userInfo.location}, Name: ${userInfo.name}, "Score: ${userInfo.score}, Interests": ${userInfo.interests}`);
+        console.log(`\t no -> click -- Info: ${userInfo.location}, Name: ${userInfo.name}, "Score: ${userInfo.score}, Interests": ${userInfo.interests}, Last Online: ${userInfo.last_online}`);
+        console.log(`LIKED: ${liked}; TOTAL: ${total}`);
         return nightmare.type("body", "2");
       }
     })
@@ -56,7 +65,7 @@ const auth = function*() {
 
 co(function*() {
   yield auth();
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < 5000; i++) {
     yield like();
   }
 }).then(() => console.log("finished!"), e => console.log(e));
